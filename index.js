@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const { getChatResponse } = require("./openaiClient");
+const { getChatResponse, transcribeAudio, speakText } = require("./openaiClient");
 
 admin.initializeApp({
   credential: admin.credential.cert({
@@ -35,5 +35,30 @@ async function chat(req, res) {
   return res.json({ reply });
 }
 
-// Your transcribe and speak endpoints remain unchanged
+async function transcribe(req, res) {
+  const audioUrl = req.body.audioUrl;
+  const text = await transcribeAudio(audioUrl);
+
+  await admin.firestore().collection("transcriptions").add({
+    audioUrl,
+    text,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  return res.json({ text });
+}
+
+async function speak(req, res) {
+  const text = req.body.text;
+  const audioUrl = await speakText(text);
+
+  await admin.firestore().collection("speech").add({
+    text,
+    audioUrl,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  return res.json({ audioUrl });
+}
+
 module.exports = { chat, transcribe, speak };
