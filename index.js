@@ -36,4 +36,4 @@ async function chat(req, res) {
 }
 
 // Your transcribe and speak endpoints remain unchanged
-module.exports = { chat };
+module.exports = { chat, transcribe, speak };
