@@ -15,16 +15,17 @@ async function transcribeAudio(audioFilePath) {
   return resp.text;
 }
 
-async function getChatResponse(userInput) {
+async function getChatResponse(messages) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "system", content: "You are a kind, empathetic therapy assistant. Give short replies unless otherwise mentioned. ONLY REPLY TO THERAPY RELATED QUESTIONS, IF NOT THERAPY RELATED PLEASE REPLY WITH THAT YOU CAN ONLY REPLY TO THERAPY RELATED QUESTIONS AND PLEASE DONT GIVE ADVICE AS TALKING TO OTHER PEOPLE, IF THEY HAD OTHER PEOPLE TO TALK TO THEY WOULDN'T BE TALKING TO YOU" },
-      { role: "user", content: userInput },
+      { role: "system", content: "You are a kind, empathetic therapy assistant. Give short replies unless otherwise mentioned. ONLY REPLY TO THERAPY RELATED QUESTIONS. If user asks non-therapy topics, politely say you can only help with therapy." },
+      ...messages
     ],
   });
   return completion.choices[0].message.content;
 }
+
 
 // Example usage:
 async function textToSpeech(text, outputFilePath) {

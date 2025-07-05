@@ -20,8 +20,30 @@ async function chat(req, res) {
     return res.status(400).json({ error: "Missing user ID" });
   }
 
-  const reply = await getChatResponse(userInput);
+  // 🔥 Fetch last 20 messages for context
+  const sessionRef = admin.firestore()
+    .collection("users")
+    .doc(uid)
+    .collection("sessions")
+    .orderBy("createdAt", "asc")
+    .limit(20);
 
+  const snapshot = await sessionRef.get();
+  const history = [];
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.userInput) history.push({ role: "user", content: data.userInput });
+    if (data.reply) history.push({ role: "assistant", content: data.reply });
+  });
+
+  // Add current user message
+  history.push({ role: "user", content: userInput });
+
+  // 🔥 Send entire history to OpenAI
+  const reply = await getChatResponse(history);
+
+  // Save this turn in Firestore
   await admin.firestore()
     .collection("users")
     .doc(uid)
