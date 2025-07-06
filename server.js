@@ -21,6 +21,10 @@ app.post("/chat", chat);
 app.post("/transcribe", transcribe);
 app.post("/speak", speak);
 
+app.get("/keep-alive", (req, res) => {
+  res.send("Server is awake.");
+});
+
 app.post("/api/audio-chat", upload.single("audio"), async (req, res) => {
   try {
     // ✅ Ensure correct file extension
