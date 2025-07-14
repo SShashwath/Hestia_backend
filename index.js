@@ -15,16 +15,19 @@ admin.initializeApp({
 async function chat(req, res) {
   const userInput = req.body.text;
   const uid = req.body.uid;
+  const did = req.body.did; // 🔥 new: chat/session id
 
-  if (!uid) {
-    return res.status(400).json({ error: "Missing user ID" });
+  if (!uid || !did) {
+    return res.status(400).json({ error: "Missing user ID or session ID" });
   }
 
-  // 🔥 Fetch last 20 messages for context
+  // 🔥 Fetch last 20 messages for this chat
   const sessionRef = admin.firestore()
     .collection("users")
     .doc(uid)
-    .collection("sessions")
+    .collection(did)
+    .doc("sessions")
+    .collection("chats")
     .orderBy("createdAt", "asc")
     .limit(20);
 
@@ -37,17 +40,16 @@ async function chat(req, res) {
     if (data.reply) history.push({ role: "assistant", content: data.reply });
   });
 
-  // Add current user message
   history.push({ role: "user", content: userInput });
 
-  // 🔥 Send entire history to OpenAI
   const reply = await getChatResponse(history);
 
-  // Save this turn in Firestore
   await admin.firestore()
     .collection("users")
     .doc(uid)
-    .collection("sessions")
+    .collection(did)
+    .doc("sessions")
+    .collection("chats")
     .add({
       userInput,
       reply,
