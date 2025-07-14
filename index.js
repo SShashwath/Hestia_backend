@@ -26,7 +26,7 @@ async function chat(req, res) {
     .collection("users")
     .doc(uid)
     .collection(did)
-    .doc("sessions")
+    
     .collection("chats")
     .orderBy("createdAt", "asc")
     .limit(20);
@@ -48,7 +48,7 @@ async function chat(req, res) {
     .collection("users")
     .doc(uid)
     .collection(did)
-    .doc("sessions")
+
     .collection("chats")
     .add({
       userInput,
