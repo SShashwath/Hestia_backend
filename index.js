@@ -85,4 +85,67 @@ async function speak(req, res) {
   return res.json({ audioUrl });
 }
 
-module.exports = { chat, transcribe, speak };
+async function listChats(req, res) {
+  const { uid } = req.params;
+  if (!uid) {
+    return res.status(400).json({ error: "Missing user ID" });
+  }
+
+  try {
+    const userRef = admin.firestore().collection("users").doc(uid);
+    const collections = await userRef.listCollections();
+    
+    const chatList = collections
+      .map(collection => {
+        if (collection.id.startsWith('chat-')) {
+          return { id: collection.id, title: collection.id };
+        }
+        return null;
+      })
+      .filter(chat => chat !== null);
+
+    chatList.sort((a, b) => {
+        const timeA = parseInt(a.id.split('-')[1] || 0);
+        const timeB = parseInt(b.id.split('-')[1] || 0);
+        return timeB - timeA;
+    });
+
+    return res.json(chatList);
+  } catch (error) {
+    console.error("Error listing chats:", error);
+    return res.status(500).json({ error: "Failed to retrieve chat history." });
+  }
+}
+
+async function getChatMessages(req, res) {
+  const { uid, chatId } = req.params;
+  if (!uid || !chatId) {
+    return res.status(400).json({ error: "Missing user or chat ID" });
+  }
+
+  try {
+    const messagesRef = admin.firestore()
+      .collection("users").doc(uid)
+      .collection(chatId).doc("sessions")
+      .collection("chats").orderBy("createdAt", "asc");
+    
+    const snapshot = await messagesRef.get();
+    const messages = [];
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.userInput) {
+            messages.push({ sender: "User", text: data.userInput });
+        }
+        if (data.reply) {
+            messages.push({ sender: "Hestia", text: data.reply });
+        }
+    });
+
+    return res.json(messages);
+  } catch (error) {
+    console.error("Error getting messages:", error);
+    return res.status(500).json({ error: "Failed to retrieve messages." });
+  }
+}
+
+module.exports = { chat, transcribe, speak, listChats, getChatMessages };

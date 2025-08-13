@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 
-const { chat, transcribe, speak } = require("./index");
+const { chat, transcribe, speak, listChats, getChatMessages } = require("./index");
 const { handleAudioChat } = require("./openaiClient");
 
 const upload = multer({ dest: "uploads/" });
@@ -18,6 +18,8 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 app.post("/chat", chat);
+app.get("/chats/:uid", listChats);
+app.get("/chats/:uid/:chatId", getChatMessages);
 app.post("/transcribe", transcribe);
 app.post("/speak", speak);
 
